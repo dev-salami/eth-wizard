@@ -1,113 +1,250 @@
-import Image from "next/image";
+"use client";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import {
+  GET_API_KEY,
+  GET_BASE_URL,
+  fetchDetails,
+  fetchPrice,
+} from "@/lib/utils";
+
+// Define the schema using zod
+const FormSchema = z.object({
+  network: z.string({
+    required_error: "Required",
+  }),
+  address: z.string().min(42, {
+    message: "Invalid addresss",
+  }),
+});
+
+import { useState } from "react";
+import { DataInterface } from "../lib/utils";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Link from "next/link";
+import axios from "axios";
 
 export default function Home() {
+  const form = useForm<z.infer<typeof FormSchema>>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: {
+      network: "",
+      address: "",
+    },
+  });
+
+  const [data, setData] = useState<DataInterface | null>(null);
+  // Handle form submission
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    console.log(data);
+    const ethWizardResponse = await fetchDetails(data);
+    console.log(ethWizardResponse);
+  };
+
+  const ethToUsd = data?.res.price ? data.res.price : 3010.20625;
+
+  const timeStampToDate = (timeStamp: string) => {
+    const date = new Date(+timeStamp * 1000);
+    return date.toDateString();
+  };
+  const generateTransactionDetailLink = (hash: string, network: string) => {
+    if (network === "mainnet") {
+      return `https://etherscan.io/tx/${hash}`;
+    } else if (network === "sepolia") {
+      return `https://sepolia.etherscan.io/tx/${hash}`;
+    } else if (network === "goerli") {
+      return `https://goerli.etherscan.io/tx/${hash}`;
+    } else if (network === "polygonMatic") {
+      return `https://polygonscan.com//tx/${hash}`;
+    } else if (network === "polygonMumbai") {
+      return `https://mumbai.polygonscan.com//tx/${hash}`;
+    }
+  };
+
+  const fetchDetails = async ({
+    network,
+    address,
+  }: {
+    network: string;
+    address: string;
+  }) => {
+    const BASE_URL = GET_BASE_URL(network);
+    const KEY = GET_API_KEY(network);
+    const etherBalance_URL = `${BASE_URL}?module=account&action=balance&address=${address}&tag=latest&apikey=${KEY}`;
+    const transactions_URL = `${BASE_URL}?module=account&action=txlist&address=${address}&startblock=0&endblock=99999999&page=1&offset=10&sort=desc&apikey=${KEY}`;
+
+    try {
+      const { data: balanceResponse } = await axios.get(etherBalance_URL);
+      const { data: transactionsResponse } = await axios.get(transactions_URL);
+      const price = await fetchPrice(network);
+      console.log(price.data.USD);
+      const ethWizardResponse = {
+        req: { network, address },
+        res: {
+          balanceResponse,
+          transactionsResponse,
+          price: price.data.USD ? price.data.USD : 2900,
+        },
+      };
+
+      setData(ethWizardResponse);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
+    <section className="bg-gray-800 text-white min-h-screen py-10">
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="w-2/3 mx-auto space-y-6"
         >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+          {/* Email Field */}
+          <FormField
+            control={form.control}
+            name="network"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Network</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger className="bg-transparent text-white">
+                      <SelectValue placeholder="Select a network" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="mainnet">Ethereum Mainnet</SelectItem>
+                    <SelectItem value="polygonMatic">Polygon Matic</SelectItem>
+                    <SelectItem value="sepolia">Sepolia Testnet</SelectItem>
+                    <SelectItem value="goerli">Goerli Testnet</SelectItem>
+                  </SelectContent>
+                </Select>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
+          {/* Username Field */}
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Wallet Address</FormLabel>
+                <FormControl>
+                  <Input
+                    className="bg-transparent text-white"
+                    placeholder="0xde0b295669a9fd93d5f28d9ec85e40f4cb697bae"
+                    {...field}
+                  />
+                </FormControl>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Submit Button */}
+          <Button className="w-full text-center" type="submit">
+            Fetch
+          </Button>
+        </form>
+      </Form>
+      <>
+        {data && (
+          <Table className="text-xs sm:text-sm lg:text-base mt-20">
+            <TableCaption>
+              Gas fees might vary based on currency conversion
+            </TableCaption>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Block Number</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Gas Fee</TableHead>
+                <TableHead className="text-right">Txn Details</TableHead>
+              </TableRow>
+            </TableHeader>
+            {data ? (
+              <TableBody>
+                {data.res.transactionsResponse.result.map(
+                  (transaction, index) => (
+                    <TableRow key={transaction.hash}>
+                      <TableCell className="font-medium">
+                        {transaction.blockNumber}
+                      </TableCell>
+                      <TableCell>
+                        {timeStampToDate(transaction.timeStamp)}
+                      </TableCell>
+                      <TableCell>
+                        ${" "}
+                        {(
+                          (+transaction.gasPrice *
+                            +transaction.gasUsed *
+                            ethToUsd) /
+                          1e18
+                        ).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link
+                          href={`${generateTransactionDetailLink(
+                            data.res.transactionsResponse.result[index].hash,
+                            data.req.network
+                          )}`}
+                        >
+                          View Details
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            ) : (
+              <></>
+            )}
+            <TableFooter>
+              <TableRow>
+                <TableCell colSpan={3}>Total</TableCell>
+                <TableCell className="text-right">$2,500.00</TableCell>
+              </TableRow>
+            </TableFooter>
+          </Table>
+        )}
+      </>
+      {/* <DataComponent /> */}
+    </section>
   );
 }
