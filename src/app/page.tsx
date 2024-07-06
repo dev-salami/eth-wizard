@@ -187,8 +187,12 @@ export default function Home() {
       <>
         {data && (
           <>
-            {" "}
-            <Table className="text-xs sm:text-sm lg:text-base mt-20">
+            <p className="font-semibold mt-10 text-xs sm:text-sm lg:text-base text-center border px-4 py-2">{`Wallet balance : ${(
+              +data.res.balanceResponse.result / 1e18
+            ).toLocaleString()} ${
+              data.req.network === "polygonMatic" ? "MATIC" : "ETH"
+            }`}</p>
+            <Table className="text-xs sm:text-sm lg:text-base mt-2">
               <TableCaption>
                 Gas fees might vary based on currency conversion
               </TableCaption>
