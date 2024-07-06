@@ -180,68 +180,68 @@ export default function Home() {
 
           {/* Submit Button */}
           <Button className="w-full text-center" type="submit">
-            Fetch
+            {form.formState.isSubmitting ? "Loading" : "Fetch"}
           </Button>
         </form>
       </Form>
       <>
         {data && (
-          <Table className="text-xs sm:text-sm lg:text-base mt-20">
-            <TableCaption>
-              Gas fees might vary based on currency conversion
-            </TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Block Number</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Gas Fee</TableHead>
-                <TableHead className="text-right">Txn Details</TableHead>
-              </TableRow>
-            </TableHeader>
-            {data ? (
-              <TableBody>
-                {data.res.transactionsResponse.result.map(
-                  (transaction, index) => (
-                    <TableRow key={transaction.hash}>
-                      <TableCell className="font-medium">
-                        {transaction.blockNumber}
-                      </TableCell>
-                      <TableCell>
-                        {timeStampToDate(transaction.timeStamp)}
-                      </TableCell>
-                      <TableCell>
-                        ${" "}
-                        {(
-                          (+transaction.gasPrice *
-                            +transaction.gasUsed *
-                            ethToUsd) /
-                          1e18
-                        ).toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Link
-                          href={`${generateTransactionDetailLink(
-                            data.res.transactionsResponse.result[index].hash,
-                            data.req.network
-                          )}`}
-                        >
-                          View Details
-                        </Link>
-                      </TableCell>
-                    </TableRow>
-                  )
-                )}
-              </TableBody>
-            ) : (
-              <></>
+          <>
+            {" "}
+            <Table className="text-xs sm:text-sm lg:text-base mt-20">
+              <TableCaption>
+                Gas fees might vary based on currency conversion
+              </TableCaption>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Block Number</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Gas Fee</TableHead>
+                  <TableHead>Txn Details</TableHead>
+                </TableRow>
+              </TableHeader>
+              {data.res.transactionsResponse.result.length > 0 ? (
+                <TableBody>
+                  {data.res.transactionsResponse.result.map(
+                    (transaction, index) => (
+                      <TableRow key={transaction.hash}>
+                        <TableCell>{transaction.blockNumber}</TableCell>
+                        <TableCell>
+                          {timeStampToDate(transaction.timeStamp)}
+                        </TableCell>
+                        <TableCell>
+                          ${" "}
+                          {(
+                            (+transaction.gasPrice *
+                              +transaction.gasUsed *
+                              ethToUsd) /
+                            1e18
+                          ).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            href={`${generateTransactionDetailLink(
+                              data.res.transactionsResponse.result[index].hash,
+                              data.req.network
+                            )}`}
+                          >
+                            View Details
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )}
+                </TableBody>
+              ) : (
+                <></>
+              )}
+            </Table>
+            {data.res.transactionsResponse.result.length === 0 && (
+              <p className="w-full text-center mt-6">
+                No Transactions for this search
+              </p>
             )}
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3}>Total</TableCell>
-                <TableCell className="text-right">$2,500.00</TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
+          </>
         )}
       </>
       {/* <DataComponent /> */}
