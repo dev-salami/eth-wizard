@@ -5,10 +5,9 @@ export const POLYGON_MATIC = "https://api.polygonscan.com/api"
 export const POLYGON_MUMBAI = "https://api-goerli.etherscan.io/api"
 
 
-// export const API_KEY_ETH = process.env.NEXT_PUBLIC_API_KEY_ETH
-// export const API_KEY_POLYGON = process.env.NEXT_PUBLIC_API_KEY_POLYGON
-export const API_KEY_ETH = "XW6Z8TMUEXF27ES4T45NDYJBCI56H3Q8ZZ"
-export const API_KEY_POLYGON = "HKHZYS7U2R7G8UFCVM24X8SP6Y6X5RARG7"
+export const API_KEY_ETH = process.env.NEXT_PUBLIC_API_KEY_ETH
+export const API_KEY_POLYGON = process.env.NEXT_PUBLIC_API_KEY_POLYGON
+
 
 
 export const sampleBalance = "2444709129358574723"
